@@ -116,11 +116,20 @@ const StudyPlanner = () => {
     };
 
     const addMaterial = (material) => {
-        setMaterials(prev => [...prev, {
+        console.log('Adding material:', material);
+        const newMaterial = {
             ...material,
             id: Date.now().toString(),
             dateAdded: new Date().toISOString()
-        }]);
+        };
+        
+        setMaterials(prev => {
+            const updatedMaterials = [...prev, newMaterial];
+            console.log('Updated materials:', updatedMaterials);
+            return updatedMaterials;
+        });
+        
+        console.log('Material added successfully to state');
     };
 
     const removeMaterial = (materialId) => {
