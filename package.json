@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "prebuild": "node -e \"try { require('fs').chmodSync('./node_modules/.bin/vite', '755') } catch(e) { console.log('chmod not needed on this platform') }\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
