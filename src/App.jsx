@@ -4,7 +4,6 @@ import { ThemeProvider } from './context/ThemeContext';
 import { QuizProvider } from './context/QuizContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import MobileBottomNav from './components/MobileBottomNav';
 
 // Pages
 import Home from './pages/Home';
@@ -16,6 +15,8 @@ import PdfExam from './pages/PdfExam';
 import Exam from './pages/Exam';
 import Results from './pages/Results';
 import RevisionPage from './pages/RevisionPage';
+import ModernSessionReview from './pages/ModernSessionReview';
+import ModernProgressDashboard from './pages/ModernProgressDashboard';
 
 /**
  * Main App Component
@@ -28,7 +29,7 @@ function App() {
                 <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
                         <Navbar />
-                        <main className="flex-grow pb-16 md:pb-0">
+                        <main className="flex-grow">
                             <Routes>
                                 <Route path="/" element={<Home />} />
                                 <Route path="/my-profile" element={<MyProfile />} />
@@ -39,10 +40,11 @@ function App() {
                                 <Route path="/pdf-exam" element={<PdfExam />} />
                                 <Route path="/exam" element={<Exam />} />
                                 <Route path="/results" element={<Results />} />
+                                <Route path="/progress-dashboard" element={<ModernProgressDashboard />} />
+                                <Route path="/session-review/:sessionId" element={<ModernSessionReview />} />
                             </Routes>
                         </main>
                         <Footer />
-                        <MobileBottomNav />
                     </div>
                 </Router>
             </QuizProvider>

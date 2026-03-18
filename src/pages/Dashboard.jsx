@@ -160,6 +160,44 @@ const Dashboard = () => {
                         </div>
                     )}
                 </div>
+
+                {/* New Features Quick Access */}
+                <div className="mt-12">
+                    <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white text-center">
+                        🚀 New Features
+                    </h2>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {/* Progress Dashboard Card */}
+                        <a
+                            href="/progress-dashboard"
+                            className="bg-gradient-to-br from-blue-500 to-purple-600 text-white p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group"
+                        >
+                            <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">📊</div>
+                            <h3 className="text-2xl font-bold mb-2">Progress Tracking</h3>
+                            <p className="text-blue-100 mb-4">
+                                Track your learning progress across all skills with detailed analytics and insights.
+                            </p>
+                            <div className="flex items-center text-blue-200">
+                                <span>Explore Progress →</span>
+                            </div>
+                        </a>
+
+                        {/* Session Review Card */}
+                        <a
+                            href="/session-review/session_001"
+                            className="bg-gradient-to-br from-yellow-500 to-orange-600 text-white p-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 group"
+                        >
+                            <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">⭐</div>
+                            <h3 className="text-2xl font-bold mb-2">Rating & Reviews</h3>
+                            <p className="text-yellow-100 mb-4">
+                                Rate your learning sessions and provide feedback to improve your experience.
+                            </p>
+                            <div className="flex items-center text-yellow-200">
+                                <span>Start Reviewing →</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     );

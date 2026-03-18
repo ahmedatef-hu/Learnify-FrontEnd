@@ -3,6 +3,8 @@
  * Utility functions used across the application
  */
 
+import { Storage } from './storage';
+
 /**
  * Calculate recommended study time based on grade, progress, and difficulty
  * 

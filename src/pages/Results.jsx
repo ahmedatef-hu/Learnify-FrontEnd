@@ -10,85 +10,119 @@ import { getGradeColor, getGradeText, updateStudyTimeByQuizScore } from '../util
 const Results = () => {
     const [result, setResult] = useState(null);
     const [updateMessage, setUpdateMessage] = useState('');
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        const lastResult = Storage.getLastResult();
-        if (!lastResult) {
-            setResult(null);
-        } else {
-            setResult(lastResult);
+        console.log('Results component mounted');
+        try {
+            const lastResult = Storage.getLastResult();
+            console.log('Last result from storage:', lastResult);
             
-            // Update study planner if subject is available
-            if (lastResult.subject) {
-                updateStudyPlanner(lastResult.subject, lastResult.percentage);
+            if (!lastResult) {
+                console.log('No result found');
+                setResult(null);
+            } else {
+                console.log('Setting result:', lastResult);
+                setResult(lastResult);
+                
+                // Update study planner if subject is available
+                if (lastResult.subject) {
+                    console.log('Updating study planner for:', lastResult.subject, lastResult.percentage);
+                    updateStudyPlanner(lastResult.subject, lastResult.percentage);
+                }
             }
+        } catch (error) {
+            console.error('Error in Results useEffect:', error);
+            setError(error.message);
+            setResult(null);
         }
     }, []);
 
     const updateStudyPlanner = (subjectName, percentage) => {
-        // Use the new smart update function
-        const updateResult = updateStudyTimeByQuizScore(subjectName, percentage, percentage);
-        
-        if (updateResult) {
-            setUpdateMessage(updateResult.message);
+        try {
+            console.log('updateStudyPlanner called with:', subjectName, percentage);
+            // Use the new smart update function
+            const updateResult = updateStudyTimeByQuizScore(subjectName, percentage, percentage);
             
-            // Additional message about time adjustment
-            if (updateResult.oldTime !== updateResult.newTime) {
-                const timeChange = updateResult.newTime - updateResult.oldTime;
-                const changeText = timeChange > 0 ? `+${timeChange}` : `${timeChange}`;
-                setUpdateMessage(prev => 
-                    `${prev} Study time adjusted: ${updateResult.oldTime} → ${updateResult.newTime} min (${changeText} min)`
-                );
-            }
-        } else {
-            // Fallback to old logic if subject not found
-            const subjects = Storage.getSubjects();
-            const subjectIndex = subjects.findIndex(s => s.name === subjectName);
-            
-            if (subjectIndex !== -1) {
-                const subject = subjects[subjectIndex];
+            if (updateResult) {
+                console.log('Update result:', updateResult);
+                setUpdateMessage(updateResult.message);
                 
-                // Update based on score
-                if (percentage === 100) {
-                    // Perfect score - mark as done
-                    subject.completed = subject.total;
-                    subject.grade = 100;
-                    setUpdateMessage(`🎉 Perfect score! ${subjectName} is now marked as complete!`);
-                } else if (percentage >= 80) {
-                    // Good score - advance progress
-                    const lessonsToAdd = Math.min(2, subject.total - subject.completed);
-                    subject.completed = Math.min(subject.total, subject.completed + lessonsToAdd);
-                    subject.grade = percentage;
-                    setUpdateMessage(`✅ Great job! Advanced ${lessonsToAdd} lessons in ${subjectName}`);
-                } else if (percentage >= 60) {
-                    // Average score - small progress
-                    const lessonsToAdd = Math.min(1, subject.total - subject.completed);
-                    subject.completed = Math.min(subject.total, subject.completed + lessonsToAdd);
-                    subject.grade = percentage;
-                    setUpdateMessage(`👍 Good effort! Advanced ${lessonsToAdd} lesson in ${subjectName}`);
-                } else {
-                    // Low score - review needed
-                    subject.grade = percentage;
-                    setUpdateMessage(`📚 Keep practicing ${subjectName}! Review the materials and try again.`);
+                // Additional message about time adjustment
+                if (updateResult.oldTime !== updateResult.newTime) {
+                    const timeChange = updateResult.newTime - updateResult.oldTime;
+                    const changeText = timeChange > 0 ? `+${timeChange}` : `${timeChange}`;
+                    setUpdateMessage(prev => 
+                        `${prev} Study time adjusted: ${updateResult.oldTime} → ${updateResult.newTime} min (${changeText} min)`
+                    );
                 }
-                
-                subject.lastQuizDate = new Date().toISOString();
-                
-                // Save updated subject
-                subjects[subjectIndex] = subject;
-                localStorage.setItem('subjects', JSON.stringify(subjects));
+            } else {
+                console.log('No update result, falling back to old logic');
+                // Fallback to old logic if subject not found
+                fallbackUpdate(subjectName, percentage);
             }
+        } catch (error) {
+            console.error('Error updating study planner:', error);
+            // Fallback to old logic on error
+            fallbackUpdate(subjectName, percentage);
+        }
+    };
+
+    const fallbackUpdate = (subjectName, percentage) => {
+        const subjects = Storage.getSubjects();
+        const subjectIndex = subjects.findIndex(s => s.name === subjectName);
+        
+        if (subjectIndex !== -1) {
+            const subject = subjects[subjectIndex];
+            
+            // Update based on score
+            if (percentage === 100) {
+                // Perfect score - mark as done
+                subject.completed = subject.total;
+                subject.grade = 100;
+                setUpdateMessage(`🎉 Perfect score! ${subjectName} is now marked as complete!`);
+            } else if (percentage >= 80) {
+                // Good score - advance progress
+                const lessonsToAdd = Math.min(2, subject.total - subject.completed);
+                subject.completed = Math.min(subject.total, subject.completed + lessonsToAdd);
+                subject.grade = percentage;
+                setUpdateMessage(`✅ Great job! Advanced ${lessonsToAdd} lessons in ${subjectName}`);
+            } else if (percentage >= 60) {
+                // Average score - small progress
+                const lessonsToAdd = Math.min(1, subject.total - subject.completed);
+                subject.completed = Math.min(subject.total, subject.completed + lessonsToAdd);
+                subject.grade = percentage;
+                setUpdateMessage(`👍 Good effort! Advanced ${lessonsToAdd} lesson in ${subjectName}`);
+            } else {
+                // Low score - review needed
+                subject.grade = percentage;
+                setUpdateMessage(`📚 Keep practicing ${subjectName}! Review the materials and try again.`);
+            }
+            
+            subject.lastQuizDate = new Date().toISOString();
+            
+            // Save updated subject
+            subjects[subjectIndex] = subject;
+            localStorage.setItem('subjects', JSON.stringify(subjects));
         }
     };
 
     if (!result) {
+        console.log('Rendering no results view');
         return (
             <div className="pt-20 pb-20 bg-gray-50 dark:bg-gray-900 min-h-screen">
                 <div className="container mx-auto px-6 py-12">
                     <div className="max-w-4xl mx-auto">
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
                             <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">Exam Results</h1>
-                            <p className="text-gray-500">No results available.</p>
+                            {error ? (
+                                <div className="text-red-600 mb-4">
+                                    <p>Error loading results: {error}</p>
+                                </div>
+                            ) : (
+                                <p className="text-gray-500">No results available.</p>
+                            )}
+                            <p className="text-sm text-gray-400 mt-2">Debug: Result is null or undefined</p>
                             <Link
                                 to="/pdf-exam"
                                 className="inline-block mt-6 bg-teal-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-teal-700 transition"
@@ -101,6 +135,8 @@ const Results = () => {
             </div>
         );
     }
+
+    console.log('Rendering results view with:', result);
 
     return (
         <div className="pt-20 pb-20 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 min-h-screen">
