@@ -149,6 +149,112 @@ export const getGradeText = (grade) => {
 };
 
 /**
+ * Update study time based on quiz performance
+ * @param {string} subjectName - Name of the subject
+ * @param {number} quizScore - Quiz score percentage (0-100)
+ * @param {number} currentGrade - Current subject grade
+ * @returns {object} Updated subject data with new recommended time
+ */
+export const updateStudyTimeByQuizScore = (subjectName, quizScore, currentGrade) => {
+    const subjects = Storage.getSubjects();
+    const subjectIndex = subjects.findIndex(s => s.name === subjectName);
+    
+    if (subjectIndex === -1) return null;
+    
+    const subject = subjects[subjectIndex];
+    
+    // Calculate time adjustment based on quiz performance
+    let timeAdjustment = 1.0; // Default multiplier
+    
+    if (quizScore >= 95) {
+        // Excellent performance (95-100%) - reduce time significantly
+        timeAdjustment = 0.7; // 30% less time
+        subject.grade = Math.min(100, subject.grade + 5); // Boost grade
+    } else if (quizScore >= 85) {
+        // Very good performance (85-94%) - reduce time moderately
+        timeAdjustment = 0.8; // 20% less time
+        subject.grade = Math.min(100, subject.grade + 3);
+    } else if (quizScore >= 75) {
+        // Good performance (75-84%) - slight reduction
+        timeAdjustment = 0.9; // 10% less time
+        subject.grade = Math.min(100, subject.grade + 2);
+    } else if (quizScore >= 60) {
+        // Average performance (60-74%) - no change
+        timeAdjustment = 1.0; // Same time
+        subject.grade = Math.min(100, subject.grade + 1);
+    } else if (quizScore >= 40) {
+        // Below average (40-59%) - increase time
+        timeAdjustment = 1.2; // 20% more time
+        // Don't change grade for poor performance
+    } else {
+        // Poor performance (0-39%) - increase time significantly
+        timeAdjustment = 1.5; // 50% more time
+        subject.grade = Math.max(0, subject.grade - 2); // Reduce grade slightly
+    }
+    
+    // Calculate new study time
+    const baseStudyTime = calculateStudyTime(
+        subject.grade,
+        subject.completed,
+        subject.total,
+        subject.difficulty
+    );
+    
+    // Apply quiz-based adjustment
+    const adjustedTime = Math.round(baseStudyTime * timeAdjustment);
+    
+    // Store the adjustment for display
+    subject.lastQuizScore = quizScore;
+    subject.timeAdjustment = timeAdjustment;
+    subject.adjustedStudyTime = adjustedTime;
+    subject.lastQuizDate = new Date().toISOString();
+    
+    // Update subject in storage
+    subjects[subjectIndex] = subject;
+    Storage.saveSubjects(subjects);
+    
+    return {
+        subject,
+        oldTime: baseStudyTime,
+        newTime: adjustedTime,
+        adjustment: timeAdjustment,
+        message: getPerformanceMessage(quizScore)
+    };
+};
+
+/**
+ * Get performance message based on quiz score
+ * @param {number} score - Quiz score percentage
+ * @returns {string} Performance message
+ */
+const getPerformanceMessage = (score) => {
+    if (score >= 95) return "🎉 Outstanding! Your study time has been reduced. Keep up the excellent work!";
+    if (score >= 85) return "🌟 Great job! Your study time has been optimized based on your performance.";
+    if (score >= 75) return "👍 Good work! Small adjustment made to your study schedule.";
+    if (score >= 60) return "📚 Decent performance. Continue with your current study routine.";
+    if (score >= 40) return "⚠️ Need more practice. Study time increased to help you improve.";
+    return "🔄 Focus needed. Significantly more study time recommended.";
+};
+
+/**
+ * Get the effective study time (considering quiz adjustments)
+ * @param {object} subject - Subject object
+ * @returns {number} Effective study time in minutes
+ */
+export const getEffectiveStudyTime = (subject) => {
+    if (subject.adjustedStudyTime) {
+        return subject.adjustedStudyTime;
+    }
+    
+    return calculateStudyTime(
+        subject.grade,
+        subject.completed,
+        subject.total,
+        subject.difficulty
+    );
+};
+
+/**
  * Generate random avatar color
  * @param {number} index - Index for consistent color selection
  * @returns {string} Tailwind color class

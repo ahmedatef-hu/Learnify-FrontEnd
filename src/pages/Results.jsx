@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Storage } from '../utils/storage';
-import { getGradeColor, getGradeText } from '../utils/helpers';
+import { getGradeColor, getGradeText, updateStudyTimeByQuizScore } from '../utils/helpers';
 
 /**
  * Results Page Component
@@ -26,41 +26,58 @@ const Results = () => {
     }, []);
 
     const updateStudyPlanner = (subjectName, percentage) => {
-        const subjects = Storage.getSubjects();
-        const subjectIndex = subjects.findIndex(s => s.name === subjectName);
+        // Use the new smart update function
+        const updateResult = updateStudyTimeByQuizScore(subjectName, percentage, percentage);
         
-        if (subjectIndex !== -1) {
-            const subject = subjects[subjectIndex];
+        if (updateResult) {
+            setUpdateMessage(updateResult.message);
             
-            // Update based on score
-            if (percentage === 100) {
-                // Perfect score - mark as done
-                subject.completed = subject.total;
-                subject.grade = 100;
-                setUpdateMessage(`🎉 Perfect score! ${subjectName} is now marked as complete!`);
-            } else if (percentage >= 80) {
-                // Good score - advance progress
-                const lessonsToAdd = Math.min(2, subject.total - subject.completed);
-                subject.completed = Math.min(subject.total, subject.completed + lessonsToAdd);
-                subject.grade = percentage;
-                setUpdateMessage(`✅ Great job! Advanced ${lessonsToAdd} lessons in ${subjectName}`);
-            } else if (percentage >= 60) {
-                // Average score - small progress
-                const lessonsToAdd = Math.min(1, subject.total - subject.completed);
-                subject.completed = Math.min(subject.total, subject.completed + lessonsToAdd);
-                subject.grade = percentage;
-                setUpdateMessage(`👍 Good effort! Advanced ${lessonsToAdd} lesson in ${subjectName}`);
-            } else {
-                // Low score - review needed
-                subject.grade = percentage;
-                setUpdateMessage(`📚 Keep practicing ${subjectName}! Review the materials and try again.`);
+            // Additional message about time adjustment
+            if (updateResult.oldTime !== updateResult.newTime) {
+                const timeChange = updateResult.newTime - updateResult.oldTime;
+                const changeText = timeChange > 0 ? `+${timeChange}` : `${timeChange}`;
+                setUpdateMessage(prev => 
+                    `${prev} Study time adjusted: ${updateResult.oldTime} → ${updateResult.newTime} min (${changeText} min)`
+                );
             }
+        } else {
+            // Fallback to old logic if subject not found
+            const subjects = Storage.getSubjects();
+            const subjectIndex = subjects.findIndex(s => s.name === subjectName);
             
-            subject.lastQuizDate = new Date().toISOString();
-            
-            // Save updated subject
-            subjects[subjectIndex] = subject;
-            localStorage.setItem('learnify_subjects', JSON.stringify(subjects));
+            if (subjectIndex !== -1) {
+                const subject = subjects[subjectIndex];
+                
+                // Update based on score
+                if (percentage === 100) {
+                    // Perfect score - mark as done
+                    subject.completed = subject.total;
+                    subject.grade = 100;
+                    setUpdateMessage(`🎉 Perfect score! ${subjectName} is now marked as complete!`);
+                } else if (percentage >= 80) {
+                    // Good score - advance progress
+                    const lessonsToAdd = Math.min(2, subject.total - subject.completed);
+                    subject.completed = Math.min(subject.total, subject.completed + lessonsToAdd);
+                    subject.grade = percentage;
+                    setUpdateMessage(`✅ Great job! Advanced ${lessonsToAdd} lessons in ${subjectName}`);
+                } else if (percentage >= 60) {
+                    // Average score - small progress
+                    const lessonsToAdd = Math.min(1, subject.total - subject.completed);
+                    subject.completed = Math.min(subject.total, subject.completed + lessonsToAdd);
+                    subject.grade = percentage;
+                    setUpdateMessage(`👍 Good effort! Advanced ${lessonsToAdd} lesson in ${subjectName}`);
+                } else {
+                    // Low score - review needed
+                    subject.grade = percentage;
+                    setUpdateMessage(`📚 Keep practicing ${subjectName}! Review the materials and try again.`);
+                }
+                
+                subject.lastQuizDate = new Date().toISOString();
+                
+                // Save updated subject
+                subjects[subjectIndex] = subject;
+                localStorage.setItem('subjects', JSON.stringify(subjects));
+            }
         }
     };
 

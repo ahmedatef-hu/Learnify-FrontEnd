@@ -97,6 +97,16 @@ export const Storage = {
         localStorage.setItem('subjects', JSON.stringify(subjects));
     },
 
+    saveSubjects(subjects) {
+        localStorage.setItem('subjects', JSON.stringify(subjects));
+    },
+
+    updateSubject(index, subject) {
+        const subjects = this.getSubjects();
+        subjects[index] = subject;
+        localStorage.setItem('subjects', JSON.stringify(subjects));
+    },
+
     deleteSubject(index) {
         const subjects = this.getSubjects();
         subjects.splice(index, 1);

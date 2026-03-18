@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Storage } from '../utils/storage';
-import { calculateStudyTime, getGradeColor } from '../utils/helpers';
+import { calculateStudyTime, getGradeColor, getEffectiveStudyTime } from '../utils/helpers';
 import MaterialUpload from '../components/MaterialUpload';
 import AddMaterialForm from '../components/AddMaterialForm';
 
@@ -312,12 +312,14 @@ const StudyPlanner = () => {
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {subjects.map((subject, index) => {
                                 const progress = (subject.completed / subject.total) * 100;
-                                const studyTime = calculateStudyTime(
+                                const studyTime = getEffectiveStudyTime(subject);
+                                const baseStudyTime = calculateStudyTime(
                                     subject.grade,
                                     subject.completed,
                                     subject.total,
                                     subject.difficulty || 'medium'
                                 );
+                                const hasQuizAdjustment = subject.adjustedStudyTime && subject.adjustedStudyTime !== baseStudyTime;
                                 
                                 // Difficulty badge
                                 const difficultyConfig = {
@@ -377,13 +379,40 @@ const StudyPlanner = () => {
                                             </div>
 
                                             <div className="bg-teal-50 dark:bg-teal-900/30 rounded-lg p-4 mt-4">
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                                                    Recommended Study Time
-                                                </p>
-                                                <p className="text-3xl font-bold text-teal-600 dark:text-teal-400">
-                                                    {studyTime} min
-                                                </p>
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                        Recommended Study Time
+                                                    </p>
+                                                    {hasQuizAdjustment && (
+                                                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                                                            Quiz Adjusted
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-baseline gap-2">
+                                                    <p className="text-3xl font-bold text-teal-600 dark:text-teal-400">
+                                                        {studyTime} min
+                                                    </p>
+                                                    {hasQuizAdjustment && (
+                                                        <p className="text-sm text-gray-500 line-through">
+                                                            {baseStudyTime} min
+                                                        </p>
+                                                    )}
+                                                </div>
                                                 <p className="text-xs text-gray-500 mt-1">per day</p>
+                                                
+                                                {subject.lastQuizScore !== undefined && (
+                                                    <div className="mt-2 pt-2 border-t border-teal-200 dark:border-teal-700">
+                                                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                                                            Last Quiz: {subject.lastQuizScore}%
+                                                            {subject.lastQuizDate && (
+                                                                <span className="ml-1">
+                                                                    ({new Date(subject.lastQuizDate).toLocaleDateString()})
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <MaterialUpload 
