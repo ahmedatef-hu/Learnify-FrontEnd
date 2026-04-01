@@ -9,6 +9,8 @@ import ModernReviewForm from '../components/ModernReviewForm';
 import ModernReviewList from '../components/ModernReviewList';
 import { reviewApi } from '../services/reviewApi';
 import { progressApi } from '../services/progressApi';
+import { StreakService } from '../services/streakService';
+import StreakNotification from '../components/StreakNotification';
 
 const ModernSessionReview = () => {
   const { sessionId } = useParams();
@@ -17,6 +19,7 @@ const ModernSessionReview = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [streakNotification, setStreakNotification] = useState({ show: false, message: '' });
   
   // Mock data - in production, get from auth context and session API
   const currentStudentId = 'student_123';
@@ -76,6 +79,15 @@ const ModernSessionReview = () => {
       setSessionCompleted(true);
       setShowReviewForm(true);
       
+      // Record streak activity for revision
+      const streakResult = StreakService.recordActivity('revision');
+      if (streakResult.streakIncreased) {
+        setStreakNotification({
+          show: true,
+          message: streakResult.message
+        });
+      }
+      
       // Show success animation
       const successDiv = document.createElement('div');
       successDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in-up';
@@ -122,6 +134,11 @@ const ModernSessionReview = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-yellow-100 dark:from-gray-900 dark:via-rose-900 dark:to-orange-950">
+      <StreakNotification 
+        message={streakNotification.message}
+        show={streakNotification.show}
+        onClose={() => setStreakNotification({ show: false, message: '' })}
+      />
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-rose-400/20 to-orange-600/20 rounded-full blur-3xl animate-pulse"></div>

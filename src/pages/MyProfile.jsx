@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '../hooks/useProfile';
 import { validateEgyptianPhone, formatEgyptianPhone } from '../utils/helpers';
+import StreakDisplay from '../components/StreakDisplay';
+import StreakHistory from '../components/StreakHistory';
 
 /**
  * My Profile Page Component
@@ -193,6 +195,11 @@ const MyProfile = () => {
                             </p>
                         </div>
                     </div>
+                </div>
+
+                {/* Streak Display */}
+                <div className="max-w-4xl mx-auto mb-8">
+                    <StreakDisplay />
                 </div>
 
                 {/* Success Message */}
@@ -421,6 +428,11 @@ const MyProfile = () => {
                             </div>
                         </form>
                     </div>
+                </div>
+
+                {/* Streak History */}
+                <div className="max-w-4xl mx-auto mt-8">
+                    <StreakHistory />
                 </div>
             </div>
         </div>

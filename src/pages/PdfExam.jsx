@@ -17,6 +17,8 @@ const PdfExam = () => {
     const [subjectName, setSubjectName] = useState('');
     const [materials, setMaterials] = useState([]);
     const [useAI, setUseAI] = useState(true);
+    const [showWarningModal, setShowWarningModal] = useState(false);
+    const [pendingExamQuestions, setPendingExamQuestions] = useState(null);
 
     // Initialize PDF.js worker and load materials if coming from StudyPlanner
     useEffect(() => {
@@ -107,13 +109,56 @@ const PdfExam = () => {
             if (subjectName) {
                 sessionStorage.setItem('currentExamSubject', subjectName);
             }
-            navigate('/exam');
+            
+            // Show warning modal before starting exam
+            setPendingExamQuestions(questions);
+            setShowWarningModal(true);
         } catch (error) {
             console.error('Error generating exam:', error);
             alert('Failed to generate AI exam. Please try again or check your internet connection.');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleStartExam = () => {
+        setShowWarningModal(false);
+        // Clear any previous exam flags
+        localStorage.removeItem('examInProgress');
+        navigate('/exam');
+    };
+
+    const handleCancelExam = () => {
+        setShowWarningModal(false);
+        Storage.clearCurrentExam();
+        sessionStorage.removeItem('currentExamSubject');
+        setPendingExamQuestions(null);
+    };
+
+    const handleGenerateTestExam = () => {
+        // Generate a simple test exam for testing anti-cheating
+        const testQuestions = [
+            {
+                question: "What is 2 + 2?",
+                options: ["3", "4", "5", "6"],
+                correct: 1
+            },
+            {
+                question: "What color is the sky?",
+                options: ["Red", "Blue", "Green", "Yellow"],
+                correct: 1
+            },
+            {
+                question: "How many days in a week?",
+                options: ["5", "6", "7", "8"],
+                correct: 2
+            }
+        ];
+        
+        Storage.setCurrentExam(testQuestions);
+        sessionStorage.setItem('currentExamSubject', 'Test Exam');
+        setPendingExamQuestions(testQuestions);
+        setShowWarningModal(true);
     };
 
     return (
@@ -201,6 +246,52 @@ const PdfExam = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Warning Modal */}
+                {showWarningModal && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
+                            <div className="text-center mb-4">
+                                <div className="text-5xl mb-3">⚠️</div>
+                                <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">
+                                    Anti-Cheating Warning
+                                </h2>
+                            </div>
+
+                            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 rounded-xl p-4 mb-4">
+                                <h3 className="font-bold text-red-800 dark:text-red-200 mb-3">
+                                    🚫 Exam Rules:
+                                </h3>
+                                <ul className="space-y-2 text-sm text-red-700 dark:text-red-300">
+                                    <li>• Do NOT switch tabs or windows</li>
+                                    <li>• Do NOT refresh the page</li>
+                                    <li>• Do NOT copy or paste</li>
+                                </ul>
+                            </div>
+
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-500 rounded-xl p-4 mb-4">
+                                <p className="text-yellow-800 dark:text-yellow-200 font-bold text-sm text-center">
+                                    ⚡ Any violation = Instant termination with 0 score
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleCancelExam}
+                                    className="flex-1 px-4 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleStartExam}
+                                    className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition"
+                                >
+                                    I Understand
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

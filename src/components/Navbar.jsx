@@ -35,8 +35,12 @@ const Navbar = () => {
             <div className="container mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link to="/" className="text-2xl font-bold text-teal-600 dark:text-teal-400">
-                        Learnify
+                    <Link to="/" className="flex items-center">
+                        <img 
+                            src="/learnify-logo.png" 
+                            alt="Learnify" 
+                            className="h-12 w-auto object-contain"
+                        />
                     </Link>
 
                     {/* Desktop Navigation */}

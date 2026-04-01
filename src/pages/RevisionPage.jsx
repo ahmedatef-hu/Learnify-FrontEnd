@@ -5,6 +5,8 @@ import RevisionChat from '../components/RevisionChat';
 import QuizInterface from '../components/QuizInterface';
 import { Storage } from '../utils/storage';
 import { apiClient } from '../services/apiClient';
+import { StreakService } from '../services/streakService';
+import StreakNotification from '../components/StreakNotification';
 
 /**
  * Revision Page Component
@@ -17,6 +19,7 @@ const RevisionPage = () => {
   const [topicData, setTopicData] = useState(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [streakNotification, setStreakNotification] = useState({ show: false, message: '' });
 
   useEffect(() => {
     // Clear chat when topic changes
@@ -96,6 +99,15 @@ const RevisionPage = () => {
         Storage.saveExam(exam);
       }
 
+      // Record streak activity for revision
+      const streakResult = StreakService.recordActivity('revision');
+      if (streakResult.streakIncreased) {
+        setStreakNotification({
+          show: true,
+          message: streakResult.message
+        });
+      }
+
       // Show success message and redirect
       setTimeout(() => {
         navigate('/study-planner', {
@@ -120,6 +132,11 @@ const RevisionPage = () => {
 
   return (
     <div className="pt-20 pb-20 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <StreakNotification 
+        message={streakNotification.message}
+        show={streakNotification.show}
+        onClose={() => setStreakNotification({ show: false, message: '' })}
+      />
       <div className="container mx-auto px-6 py-12">
         <button
           onClick={() => navigate('/study-planner')}
